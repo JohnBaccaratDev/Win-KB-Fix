@@ -1,5 +1,7 @@
 package com.johnbaccarat.win_kb_fix.core;
 
+import com.johnbaccarat.win_kb_fix.Constants;
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import org.lwjgl.glfw.GLFWNativeWin32;
@@ -24,7 +26,7 @@ public abstract class interop {
     static Logger logger;
 
     static StickyKeysStructure sk;
-    static WinDef.UINT handle;
+    static UINT handle;
 
     static String pid;
 
@@ -37,8 +39,7 @@ public abstract class interop {
         wrapper = w;
 
         wrapper.info("Trying to disable sticky keys & hook keyboard");
-
-        mutex = Kernel32.INSTANCE.CreateMutex(null, false, mutexName);
+        mutex = k32.INSTANCE.CreateMutexW(null, false, mutexName);
 
         int dword_ret = Kernel32.INSTANCE.WaitForSingleObject(mutex, 5000);
         switch (dword_ret){
@@ -52,19 +53,23 @@ public abstract class interop {
         try{
             sk = new StickyKeysStructure();
 
-            handle = new WinDef.UINT(GLFWNativeWin32.glfwGetWin32Window(interop.wrapper.getLGFWWindowPointer()));
+            handle = new UINT(GLFWNativeWin32.glfwGetWin32Window(interop.wrapper.getLGFWWindowPointer()));
+            Integer error;
 
-            u32.INSTANCE.SystemParametersInfoW(u32.SPI_GETSTICKYKEYS, sk.cbSize, sk, handle);
+            if(!u32.INSTANCE.SystemParametersInfoW(u32.SPI_GETSTICKYKEYS, sk.cbSize, sk, handle)){
+                Constants.LOG.error("Could not get Sticky keys information.");
+                return;
+            }
 
             stickyKeysWasActiveAtStartup = skStickyKeysEnabled(sk);
 
             seeIfStickyKeyAlreadyChanged();
         }catch (Exception e){
-            Kernel32.INSTANCE.ReleaseMutex(mutex);
+            k32.INSTANCE.ReleaseMutex(mutex);
             throw new RuntimeException(e);
         }
 
-        Kernel32.INSTANCE.ReleaseMutex(mutex);
+        k32.INSTANCE.ReleaseMutex(mutex);
 
         try{
             hookKeyboard();
@@ -219,11 +224,11 @@ public abstract class interop {
             switch (dword_ret){
                 case WinError.WAIT_TIMEOUT:
                     wrapper.error("Resetting sticky keys - Waiting for other Mutex has timed out after 5s.");
-                    Kernel32.INSTANCE.ReleaseMutex(mutex);
+                    k32.INSTANCE.ReleaseMutex(mutex);
                     return;
                 case WinBase.WAIT_FAILED:
                     wrapper.error("Resetting sticky keys - Waiting for other Mutex has failed.");
-                    Kernel32.INSTANCE.ReleaseMutex(mutex);
+                    k32.INSTANCE.ReleaseMutex(mutex);
                     return;
             }
             try {
@@ -259,33 +264,33 @@ public abstract class interop {
                 }
 
             }catch (Exception e){
-                Kernel32.INSTANCE.ReleaseMutex(mutex);
+                k32.INSTANCE.ReleaseMutex(mutex);
                 throw new RuntimeException(e);
             }
             enableStickyKeysOnExit = false;
-            Kernel32.INSTANCE.ReleaseMutex(mutex);
+            k32.INSTANCE.ReleaseMutex(mutex);
         }
     }
 
     static boolean skStickyKeysEnabled(StickyKeysStructure s){
-        return (s.dwFlags.intValue() & u32.SKF_HOTKEYACTIVE.intValue()) == u32.SKF_HOTKEYACTIVE.intValue();
+        return (s.dwFlags.intValue() & u32.SKF_HOTKEYACTIVE) == u32.SKF_HOTKEYACTIVE;
     }
     static StickyKeysStructure skDisableStickyKeys(StickyKeysStructure s){
         if(skStickyKeysEnabled(s)){
-            s.dwFlags = new WinDef.DWORD(s.dwFlags.intValue()^u32.SKF_HOTKEYACTIVE.intValue());
+            s.dwFlags = new UINT(s.dwFlags.intValue()^u32.SKF_HOTKEYACTIVE);
         }
         return s;
     }
 
     static StickyKeysStructure skEnableStickyKeys(StickyKeysStructure s){
-        s.dwFlags = new WinDef.DWORD(s.dwFlags.intValue()|u32.SKF_HOTKEYACTIVE.intValue());
+        s.dwFlags = new UINT(s.dwFlags.intValue()|u32.SKF_HOTKEYACTIVE);
         return s;
     }
 
     public static void hookKeyboard(){
         WinDef.HWND handle =  new WinDef.HWND( new Pointer(GLFWNativeWin32.glfwGetWin32Window(interop.wrapper.getLGFWWindowPointer())));
         WinDef.HINSTANCE instance = u32.INSTANCE.GetWindowLongPtrW(handle, u32.GWLP_HINSTANCE);
-        hook = User32.INSTANCE.SetWindowsHookEx(WinUser.WH_KEYBOARD_LL, hookKeyboardCallback(), instance, 0);
+        hook = u32.INSTANCE.SetWindowsHookExW(WinUser.WH_KEYBOARD_LL, hookKeyboardCallback(), instance, new WinDef.DWORD(0));
     }
 
     public static void unhookKeyboard(){
@@ -298,31 +303,36 @@ public abstract class interop {
     }
 
     private interface KeyboardHook extends WinUser.HOOKPROC {
-        public WinDef.LRESULT callback(int code, WinDef.WPARAM wParam, WinUser.KBDLLHOOKSTRUCT lParam);
+        public WinDef.LRESULT callback(int code, WinDef.WPARAM wParam, KBDLLHOOKSTRUCT lParam);
     }
 
     public static KeyboardHook hookKeyboardCallback() {
         return (code, wParam, lParam) -> {
-            if (code >= 0) {
-                if (lParam.vkCode == Win32VK.VK_LWIN.code){
-                    if (interop.wrapper.redirectWinKey()){
-                        if(wParam.intValue() == WinUser.WM_KEYDOWN){
-                            interop.wrapper.lWinDown();
-                        }else{
-                            interop.wrapper.lWinUp();
+            try{
+                 if (code >= 0) {
+                    if (lParam.vkCode == u32.VK_LWIN){
+                        if (interop.wrapper.redirectWinKey()){
+                            if(wParam.intValue() == WinUser.WM_KEYDOWN){
+                                interop.wrapper.lWinDown();
+                            }else{
+                                interop.wrapper.lWinUp();
+                            }
+                            return u32.reject;
                         }
-                        return u32.reject;
-                    }
-                }else if(lParam.vkCode == Win32VK.VK_RWIN.code){
-                    if (interop.wrapper.redirectWinKey()){
-                        if(wParam.intValue() == WinUser.WM_KEYDOWN){
-                            interop.wrapper.rWinDown();
-                        }else{
-                            interop.wrapper.rWinUp();
+                    }else if(lParam.vkCode == u32.VK_RWIN){
+                        if (interop.wrapper.redirectWinKey()){
+                            if(wParam.intValue() == WinUser.WM_KEYDOWN){
+                                interop.wrapper.rWinDown();
+                            }else{
+                                interop.wrapper.rWinUp();
+                            }
+                            return u32.reject;
                         }
-                        return u32.reject;
                     }
                 }
+            }
+            catch (Exception e){
+                e.printStackTrace();
             }
             return User32.INSTANCE.CallNextHookEx(hook, code, wParam, new WinDef.LPARAM(Pointer.nativeValue(lParam.getPointer())));
         };

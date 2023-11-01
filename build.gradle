@@ -1,34 +1,33 @@
 plugins {
-    id 'fabric-loom' version '1.2-SNAPSHOT' apply(false)
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)' apply(false)
-    id 'org.spongepowered.gradle.vanilla' version '0.2.1-SNAPSHOT' apply(false)
+    id 'fabric-loom' version '57815b9' apply(false)
+    id 'net.minecraftforge.gradle' version 'c6cc9ff' apply(false)
+    id 'org.spongepowered.gradle.vanilla' version '0.2-SNAPSHOT' apply(false)
     id("org.spongepowered.mixin") version "0.7-SNAPSHOT" apply(false)
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+/*    id 'com.github.johnrengelman.shadow' version '8.1.1'*/
 }
 
 subprojects {
     apply plugin: 'java'
-/*
-    java.toolchain.languageVersion = JavaLanguageVersion.of(17)*/
+    java.toolchain.languageVersion = JavaLanguageVersion.of(8)
     java.withSourcesJar()
     java.withJavadocJar()
-        
+
     jar {
         from(rootProject.file("LICENSE")) {
             rename { "${it}_${mod_name}" }
         }
         manifest {
             attributes([
-                'Specification-Title'     : mod_name,
-                'Specification-Vendor'    : mod_author,
-                'Specification-Version'   : project.jar.archiveVersion,
-                'Implementation-Title'    : project.name,
-                'Implementation-Version'  : project.jar.archiveVersion,
-                'Implementation-Vendor'   : mod_author,
-                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                'Timestamp'               : System.currentTimeMillis(),
-                'Built-On-Java'           : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-                'Built-On-Minecraft'      : minecraft_version
+                    'Specification-Title'     : mod_name,
+                    'Specification-Vendor'    : mod_author,
+                    'Specification-Version'   : project.jar.archiveVersion,
+                    'Implementation-Title'    : project.name,
+                    'Implementation-Version'  : project.jar.archiveVersion,
+                    'Implementation-Vendor'   : mod_author,
+                    'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                    'Timestamp'               : System.currentTimeMillis(),
+                    'Built-On-Java'           : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
+                    'Built-On-Minecraft'      : minecraft_version
             ])
         }
     }
@@ -41,6 +40,8 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        jcenter()
         maven {
             name = 'Sponge / Mixin'
             url = 'https://repo.spongepowered.org/repository/maven-public/'
@@ -50,11 +51,10 @@ subprojects {
             url = 'https://maven.blamejared.com'
         }
     }
-
     tasks.withType(JavaCompile).configureEach {
-    
-        it.options.encoding = 'UTF-8'/*
-        it.options.getRelease().set(17)*/
+
+        it.options.encoding = 'UTF-8'
+/*        it.options.getRelease().set(8)*/
     }
 
     processResources {

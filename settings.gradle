@@ -13,12 +13,26 @@ pluginManagement {
             name = 'Sponge Snapshots'
             url = 'https://repo.spongepowered.org/repository/maven-public/'
         }
+        maven {
+            name = 'Jitpack'
+            url = 'https://jitpack.io'
+        }
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "fabric-loom" && requested.version?.endsWith("-SNAPSHOT") != true) {
+                useModule("com.github.JohnBaccaratDev:fabric-loom:${requested.version}")
+            }
+            if (requested.id.id == "net.minecraftforge.gradle" && requested.version?.endsWith("-SNAPSHOT") != true) {
+                useModule("com.github.JohnBaccaratDev:ForgeGradle:${requested.version}")
+            }
+        }
     }
 }
 
-plugins {
+/*plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.5.0'
-}
+}*/
 
 // This should match the folder name of the project, or else IDEA may complain (see https://youtrack.jetbrains.com/issue/IDEA-317606)
 rootProject.name = 'Win-KB-Fix'

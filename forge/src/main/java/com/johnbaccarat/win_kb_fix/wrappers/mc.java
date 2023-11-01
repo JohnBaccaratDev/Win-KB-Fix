@@ -4,6 +4,7 @@ package com.johnbaccarat.win_kb_fix.wrappers;
 import com.johnbaccarat.win_kb_fix.Constants;
 import com.johnbaccarat.win_kb_fix.core.McWrapper;
 import net.minecraft.client.Minecraft;
+import java.lang.reflect.Field;
 
 public class mc implements McWrapper {
 
@@ -63,7 +64,28 @@ public class mc implements McWrapper {
 
     @Override
     public long getLGFWWindowPointer() {
-        return mc.getWindow().getWindow();
+
+        try{
+            return mc.getWindow().getWindow();
+        }catch (Exception e){
+            try{
+                Class c = Class.forName("org.lwjgl.opengl.Display");
+                Constants.LOG.info("Got Class");
+                Field f = c.getField("display_impl");
+                Constants.LOG.info("Got display_impl");
+                Object displayImplentation = f.get(null);
+                Constants.LOG.info("Got displayImplentation");
+                c = Class.forName("org.lwjgl.opengl.WindowsDisplay");
+                Constants.LOG.info("Got 2nd Class");
+                f = c.getField("hwnd");
+                Constants.LOG.info("Got hwnd field");
+                return (long) f.get(displayImplentation);
+            }catch (Exception e2){
+                Constants.LOG.error("The instance of the main Dindow could not be obtained.");
+            }
+        }
+
+        throw new RuntimeException("Could not");
     }
 
 
