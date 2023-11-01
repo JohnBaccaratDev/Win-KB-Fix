@@ -1,10 +1,8 @@
 package com.johnbaccarat.win_kb_fix.core;
 
 import com.johnbaccarat.win_kb_fix.Constants;
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
-import org.lwjgl.glfw.GLFWNativeWin32;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -53,7 +51,7 @@ public abstract class interop {
         try{
             sk = new StickyKeysStructure();
 
-            handle = new UINT(GLFWNativeWin32.glfwGetWin32Window(interop.wrapper.getLGFWWindowPointer()));
+            handle = new UINT(interop.wrapper.getLGFWWindowPointer());
             Integer error;
 
             if(!u32.INSTANCE.SystemParametersInfoW(u32.SPI_GETSTICKYKEYS, sk.cbSize, sk, handle)){
@@ -288,7 +286,7 @@ public abstract class interop {
     }
 
     public static void hookKeyboard(){
-        WinDef.HWND handle =  new WinDef.HWND( new Pointer(GLFWNativeWin32.glfwGetWin32Window(interop.wrapper.getLGFWWindowPointer())));
+        WinDef.HWND handle =  new WinDef.HWND( new Pointer(interop.wrapper.getLGFWWindowPointer()));
         WinDef.HINSTANCE instance = u32.INSTANCE.GetWindowLongPtrW(handle, u32.GWLP_HINSTANCE);
         hook = u32.INSTANCE.SetWindowsHookExW(WinUser.WH_KEYBOARD_LL, hookKeyboardCallback(), instance, new WinDef.DWORD(0));
     }

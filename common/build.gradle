@@ -13,7 +13,14 @@ minecraft {
 }
 
 dependencies {
-    compileOnly group:'org.spongepowered', name:'mixin', version:'0.8.5'
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+/*    compileOnly group:'org.spongepowered', name:'mixin', version:'0.8.5'*/
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
-    implementation(group: "org.slf4j", name: "slf4j-simple", version:"[2.0.0]")
+    //implementation(group: "org.slf4j", name: "slf4j-simple", version:"[2.0.0]")
+    implementation "org.apache.logging.log4j:log4j-api:2.15.0"
+    implementation "org.apache.logging.log4j:log4j-core:2.15.0"
+    implementation("net.java.dev.jna:jna:5.13.0")
+    implementation("net.java.dev.jna:jna-platform:5.13.0")
+    //implementation("org.lwjgl.osgi:org.lwjgl.glfw:2.9.4")
+    //implementation("org.lwjgl:lwjgl-glfw:2.9.4")
 }

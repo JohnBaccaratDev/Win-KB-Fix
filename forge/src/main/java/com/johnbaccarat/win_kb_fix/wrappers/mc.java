@@ -3,8 +3,15 @@ package com.johnbaccarat.win_kb_fix.wrappers;
 
 import com.johnbaccarat.win_kb_fix.Constants;
 import com.johnbaccarat.win_kb_fix.core.McWrapper;
+import com.johnbaccarat.win_kb_fix.core.u32;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.Display;
+
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 
 public class mc implements McWrapper {
 
@@ -12,51 +19,77 @@ public class mc implements McWrapper {
 
     Class screenWithKeybindings;
 
+    ByteBuffer keyboardReadBuffer;
+
     public mc(Minecraft m){
         mc = m;
 
         try{
-            screenWithKeybindings = Class.forName("net.minecraft.client.gui.screens.controls.KeyBindsScreen");
+            screenWithKeybindings = Class.forName("net.minecraft.client.gui.GuiControls");
         }catch (Exception e){
-            try{
-                screenWithKeybindings =  Class.forName("net.minecraft.client.gui.screens.controls.ControlsScreen");
-            }catch (Exception e2){
-                try{
-                    screenWithKeybindings = Class.forName("net.minecraft.client.gui.screen.ControlsScreen");
-                }catch (Exception e3){
-                    error("Neither the KeyBindsScreen or the ControlsScreen class seems to exist.");
-                }
-            }
+            Constants.LOG.error("Could not find class of GUI with controls.");
+            screenWithKeybindings = null;
         }
+
+        try{
+            Class c = Class.forName("org.lwjgl.input.Keyboard");
+            Field f = c.getDeclaredField("readBuffer");
+            f.setAccessible(true);
+            keyboardReadBuffer = (ByteBuffer) f.get(null);
+        }
+        catch (Exception e){
+            keyboardReadBuffer = null;
+        }
+    }
+
+    byte down = 0x1;
+    byte up = 0x0;
+
+    public void putInKeyboardBuffer(int key, byte state){
+        if(keyboardReadBuffer.remaining() < (1+8+4+1+4)){
+            keyboardReadBuffer.limit(keyboardReadBuffer.limit() - keyboardReadBuffer.remaining() + (1+8+4+1+4));
+        }
+        keyboardReadBuffer.putInt(key); // key
+        keyboardReadBuffer.put(state); // state - up/down
+        keyboardReadBuffer.putInt(0); // character
+        keyboardReadBuffer.putLong(0); // nanos
+        keyboardReadBuffer.put(up); // repeat
+        keyboardReadBuffer.rewind();
+/*
+        event.key = readBuffer.getInt() & 0xFF;
+        event.state = readBuffer.get() != 0;
+        event.character = readBuffer.getInt();
+        event.nanos = readBuffer.getLong();
+        event.repeat = readBuffer.get() == 1;*/
     }
 
     @Override
     public void lWinUp() {
-        mc.keyboardHandler.keyPress(mc.getWindow().getWindow(), 343, 347, 0, 0);
+        putInKeyboardBuffer(219, up);
     }
 
     @Override
     public void lWinDown() {
-        mc.keyboardHandler.keyPress( mc.getWindow().getWindow(), 343, 347, 1, 8);
+        putInKeyboardBuffer(219, down);
     }
 
     @Override
     public void rWinUp() {
-        mc.keyboardHandler.keyPress(mc.getWindow().getWindow(), 347, 348, 0, 0);
+        putInKeyboardBuffer(220, up);
     }
 
     @Override
     public void rWinDown() {
-        mc.keyboardHandler.keyPress(mc.getWindow().getWindow(), 347, 348, 1, 8);
+        putInKeyboardBuffer(220, down);
     }
 
     @Override
     public boolean redirectWinKey() {
-        if (mc.isWindowActive()){
-            if(mc.screen == null){
+        if (Display.isActive()){
+            if(mc.currentScreen == null){
                 return true;
             }else{
-                return screenWithKeybindings != null ? screenWithKeybindings.isInstance(mc.screen) : false;
+                return screenWithKeybindings != null ? screenWithKeybindings.isInstance(mc.currentScreen) : false;
             }
         }
         return false;
@@ -64,28 +97,20 @@ public class mc implements McWrapper {
 
     @Override
     public long getLGFWWindowPointer() {
-
         try{
-            return mc.getWindow().getWindow();
-        }catch (Exception e){
-            try{
-                Class c = Class.forName("org.lwjgl.opengl.Display");
-                Constants.LOG.info("Got Class");
-                Field f = c.getField("display_impl");
-                Constants.LOG.info("Got display_impl");
-                Object displayImplentation = f.get(null);
-                Constants.LOG.info("Got displayImplentation");
-                c = Class.forName("org.lwjgl.opengl.WindowsDisplay");
-                Constants.LOG.info("Got 2nd Class");
-                f = c.getField("hwnd");
-                Constants.LOG.info("Got hwnd field");
-                return (long) f.get(displayImplentation);
-            }catch (Exception e2){
-                Constants.LOG.error("The instance of the main Dindow could not be obtained.");
-            }
+            Class c = Class.forName("org.lwjgl.opengl.Display");
+            Field f = c.getDeclaredField("display_impl");
+            f.setAccessible(true);
+            Object displayImplentation = f.get(null);
+            c = Class.forName("org.lwjgl.opengl.WindowsDisplay");
+            f = c.getDeclaredField("hwnd");
+            f.setAccessible(true);
+            return (long) f.get(displayImplentation);
+        }catch (Exception e2){
+            Constants.LOG.error("The instance of the main Window could not be obtained.");
         }
 
-        throw new RuntimeException("Could not");
+        throw new RuntimeException("Could not get");
     }
 
 
