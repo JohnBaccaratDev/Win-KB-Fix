@@ -46,8 +46,12 @@ public class mc implements McWrapper {
     byte up = 0x0;
 
     public void putInKeyboardBuffer(int key, byte state){
-        if(keyboardReadBuffer.remaining() < (1+8+4+1+4)){
-            keyboardReadBuffer.limit(keyboardReadBuffer.limit() - keyboardReadBuffer.remaining() + (1+8+4+1+4));
+        if(keyboardReadBuffer.hasRemaining()){
+            keyboardReadBuffer.position(keyboardReadBuffer.limit());
+        }
+
+        if(keyboardReadBuffer.remaining() < (18)){
+            keyboardReadBuffer.limit(keyboardReadBuffer.limit() - keyboardReadBuffer.remaining() + (18));
         }
         keyboardReadBuffer.putInt(key); // key
         keyboardReadBuffer.put(state); // state - up/down

@@ -7,7 +7,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.commons.lang3.SystemUtils;
-import scala.collection.immutable.Stream;
 
 @Mod(modid = Constants.MOD_ID, acceptedMinecraftVersions = "[,1.13)")
 public class win_kb_fix {
