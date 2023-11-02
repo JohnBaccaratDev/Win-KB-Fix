@@ -16,7 +16,10 @@ public class MixinTitleScreen {
 
     private static Boolean Inited = false;
 
-    @Inject(at = @At("HEAD"), method = "init()V")
+    @Inject(at = @At("TAIL"), method = {
+            "<init>(Z)V",
+            "<init>"
+    }, remap = false)
     private void init(CallbackInfo info) {
 
         if(!Inited){
