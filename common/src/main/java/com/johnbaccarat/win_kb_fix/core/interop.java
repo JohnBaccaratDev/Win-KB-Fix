@@ -311,18 +311,18 @@ public abstract class interop {
                     if (lParam.vkCode == u32.VK_LWIN){
                         if (interop.wrapper.redirectWinKey()){
                             if(wParam.intValue() == WinUser.WM_KEYDOWN){
-                                interop.wrapper.lWinDown();
+                                if(!interop.wrapper.lWinDown()) return User32.INSTANCE.CallNextHookEx(hook, code, wParam, new WinDef.LPARAM(Pointer.nativeValue(lParam.getPointer())));
                             }else{
-                                interop.wrapper.lWinUp();
+                                if(!interop.wrapper.lWinUp()) return User32.INSTANCE.CallNextHookEx(hook, code, wParam, new WinDef.LPARAM(Pointer.nativeValue(lParam.getPointer())));
                             }
                             return u32.reject;
                         }
                     }else if(lParam.vkCode == u32.VK_RWIN){
                         if (interop.wrapper.redirectWinKey()){
                             if(wParam.intValue() == WinUser.WM_KEYDOWN){
-                                interop.wrapper.rWinDown();
+                                if(!interop.wrapper.rWinDown()) return User32.INSTANCE.CallNextHookEx(hook, code, wParam, new WinDef.LPARAM(Pointer.nativeValue(lParam.getPointer())));
                             }else{
-                                interop.wrapper.rWinUp();
+                                if(!interop.wrapper.rWinUp()) return User32.INSTANCE.CallNextHookEx(hook, code, wParam, new WinDef.LPARAM(Pointer.nativeValue(lParam.getPointer())));
                             }
                             return u32.reject;
                         }

@@ -1,10 +1,10 @@
 package com.johnbaccarat.win_kb_fix.core;
 
 public interface McWrapper {
-    public void lWinUp();
-    public void lWinDown();
-    public void rWinUp();
-    public void rWinDown();
+    public Boolean lWinUp();
+    public Boolean lWinDown();
+    public Boolean rWinUp();
+    public Boolean rWinDown();
     public boolean redirectWinKey();
     public long getLGFWWindowPointer();
 

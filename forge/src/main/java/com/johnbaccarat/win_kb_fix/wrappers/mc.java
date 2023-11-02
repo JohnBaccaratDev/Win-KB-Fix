@@ -7,6 +7,7 @@ import com.johnbaccarat.win_kb_fix.core.u32;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
+import scala.Int;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -21,6 +22,10 @@ public class mc implements McWrapper {
 
     ByteBuffer keyboardReadBuffer;
 
+    Field keyboardReadBufferField;
+
+    Boolean DisableWinKeyOverride = false;
+
     public mc(Minecraft m){
         mc = m;
 
@@ -33,9 +38,9 @@ public class mc implements McWrapper {
 
         try{
             Class c = Class.forName("org.lwjgl.input.Keyboard");
-            Field f = c.getDeclaredField("readBuffer");
-            f.setAccessible(true);
-            keyboardReadBuffer = (ByteBuffer) f.get(null);
+            keyboardReadBufferField = c.getDeclaredField("readBuffer");
+            keyboardReadBufferField.setAccessible(true);
+            keyboardReadBuffer = (ByteBuffer) keyboardReadBufferField.get(null);
         }
         catch (Exception e){
             keyboardReadBuffer = null;
@@ -45,13 +50,34 @@ public class mc implements McWrapper {
     byte down = 0x1;
     byte up = 0x0;
 
-    public void putInKeyboardBuffer(int key, byte state){
+    public Boolean putInKeyboardBuffer(int key, byte state){
         if(keyboardReadBuffer.hasRemaining()){
             keyboardReadBuffer.position(keyboardReadBuffer.limit());
         }
 
         if(keyboardReadBuffer.remaining() < (18)){
-            keyboardReadBuffer.limit(keyboardReadBuffer.limit() - keyboardReadBuffer.remaining() + (18));
+            int newLimit = keyboardReadBuffer.limit() - keyboardReadBuffer.remaining() + (18);
+            if(newLimit > keyboardReadBuffer.capacity()){
+                int origPos = keyboardReadBuffer.position();
+                keyboardReadBuffer.position(0);
+                ByteBuffer nb = ByteBuffer.allocate(newLimit);
+
+                while(keyboardReadBuffer.hasRemaining()){
+                    nb.put(keyboardReadBuffer.get());
+                }
+                nb.position(origPos);
+
+                keyboardReadBuffer = nb;
+                try {
+                    keyboardReadBufferField.set(null, nb);
+                } catch (IllegalAccessException e) {
+                    Constants.LOG.error("Could not change readBuffer of keyboard. Windows key will not be usable");
+                    DisableWinKeyOverride = true;
+                    return false;
+                }
+            }
+
+            keyboardReadBuffer.limit(newLimit);
         }
         keyboardReadBuffer.putInt(key); // key
         keyboardReadBuffer.put(state); // state - up/down
@@ -59,37 +85,32 @@ public class mc implements McWrapper {
         keyboardReadBuffer.putLong(0); // nanos
         keyboardReadBuffer.put(up); // repeat
         keyboardReadBuffer.rewind();
-/*
-        event.key = readBuffer.getInt() & 0xFF;
-        event.state = readBuffer.get() != 0;
-        event.character = readBuffer.getInt();
-        event.nanos = readBuffer.getLong();
-        event.repeat = readBuffer.get() == 1;*/
+        return true;
     }
 
     @Override
-    public void lWinUp() {
-        putInKeyboardBuffer(219, up);
+    public Boolean lWinUp() {
+        return putInKeyboardBuffer(219, up)?true:false;
     }
 
     @Override
-    public void lWinDown() {
-        putInKeyboardBuffer(219, down);
+    public Boolean lWinDown() {
+        return putInKeyboardBuffer(219, down)?true:false;
     }
 
     @Override
-    public void rWinUp() {
-        putInKeyboardBuffer(220, up);
+    public Boolean rWinUp() {
+        return putInKeyboardBuffer(220, up)?true:false;
     }
 
     @Override
-    public void rWinDown() {
-        putInKeyboardBuffer(220, down);
+    public Boolean rWinDown() {
+        return putInKeyboardBuffer(220, down)?true:false;
     }
 
     @Override
     public boolean redirectWinKey() {
-        if (Display.isActive()){
+        if (Display.isActive() && !DisableWinKeyOverride){
             if(mc.currentScreen == null){
                 return true;
             }else{

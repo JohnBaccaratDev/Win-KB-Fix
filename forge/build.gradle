@@ -78,16 +78,14 @@ sourceSets.main.resources.srcDir 'src/generated/resources'
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     compileOnly project(":common")
-/*    jarJar(group: "org.slf4j", name: "slf4j-api", version:"[2.0.0]")
-    jarJar(group: "org.slf4j", name: "slf4j-simple", version:"[2.0.0]")*/
-/*    annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")*/
-/*    implementation(group: "org.spongepowered", name :"mixin", version:"[0.8.5-SNAPSHOT]")*/
+
     implementation("net.java.dev.jna:jna:5.13.0")
     implementation("net.java.dev.jna:jna-platform:5.13.0")
     //implementation("org.lwjgl.osgi:org.lwjgl.glfw:2.9.4")
     //implementation("org.lwjgl:lwjgl-glfw:2.9.4")
-    jarJar("net.java.dev.jna:jna:5.13.0")
-    jarJar("net.java.dev.jna:jna-platform:5.13.0")
+/*
+    jarJar(group:"net.java.dev.jna", name:"jna", version:"5.13.0")
+    jarJar(group:"net.java.dev.jna", name:"jna-platform", version:"5.13.0")*/
 }
 
 tasks.withType(JavaCompile).configureEach {

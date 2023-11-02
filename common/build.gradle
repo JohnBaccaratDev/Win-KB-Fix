@@ -3,7 +3,7 @@ plugins {
     id 'java'
     id 'org.spongepowered.gradle.vanilla'
 }
-archivesBaseName = "${mod_name}-common-${minecraft_version}"
+archivesBaseName = "${mod_name}-common-${minecraft_jar_version_range}"
 
 minecraft {
     version(minecraft_version)
