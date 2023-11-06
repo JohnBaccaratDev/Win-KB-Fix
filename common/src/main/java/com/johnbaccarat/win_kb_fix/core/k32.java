@@ -1,6 +1,7 @@
 package com.johnbaccarat.win_kb_fix.core;
 
 import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Tlhelp32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinNT;
@@ -21,4 +22,5 @@ public class k32 {
 
     public native boolean ReleaseMutex(WinNT.HANDLE handle);
 
+    public native boolean Process32Next(WinNT.HANDLE hSnapshot, Tlhelp32.PROCESSENTRY32 lppe);
 }
