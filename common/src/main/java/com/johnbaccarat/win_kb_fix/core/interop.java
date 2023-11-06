@@ -160,7 +160,7 @@ public abstract class interop {
         List<String> ret = new ArrayList<>();
 
         WinNT.HANDLE snapshot = Kernel32.INSTANCE.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
-        Tlhelp32.PROCESSENTRY32.ByReference processEntry = new Tlhelp32.PROCESSENTRY32.ByReference();
+        ProcessEntryByReference processEntry = new ProcessEntryByReference();
         while (Kernel32.INSTANCE.Process32Next(snapshot, processEntry)) {
             ret.add(processEntry.th32ProcessID.toString());
         }
